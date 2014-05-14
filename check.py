@@ -4,6 +4,7 @@ import hashlib
 import sys
 import os
 import time
+import subprocess
 
 import jinja2
 import requests
@@ -11,75 +12,119 @@ import paramiko
 
 ADMIN_MESG_LOCATION = "/tmp/admin_message"
 
-def test_login(test_name, host, user ):
-  response = [test_name, "OK", ""]
+def test_login(service, host, user ):
+  result = { 'service' : service,
+             'status' : "OK", 
+             'message' : '' }
   client = paramiko.client.SSHClient()
   try:
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(hostname=host, port=22, username=user)
   except paramiko.AuthenticationException:
-    response = (test_name, "FAILED", "Can't authenticate to %s" % host)
+    result['status'] = 'FAILED'
+    result['message'] = "Can't authenticate to %s" % host
   except paramiko.SSHException:
-    response = (test_name, "FAILED", "Can't establish ssh connection to %s" % host)
+    result['status'] = 'FAILED'
+    result['message'] = "Can't establish ssh connection to %s" % host
   except socket.error:
-    response = (test_name, "FAILED", "Socket error connecting to %s" % host) 
-  return response
+    result['status'] = 'FAILED'
+    result['message'] = "Socket error connecting to %s" % host
+  return result
 
-def test_download(test_name, url, sha1):
-  response = [test_name, "OK", '']
+def test_download(service, url, sha1):
+  result = { 'service' : service,
+             'status' : "OK", 
+             'message' : '' }
   try:
     r = requests.get(url, timeout=60)
     if r.status_code != requests.codes.ok:
-      response[1] = "FAILED"
-      response[2] = "HTTP Status code: %s" % r.status_code
-      return response
+      result['status'] = "FAILED"
+      result['message'] = "HTTP Status code: %s" % r.status_code
+      return result
     if hashlib.sha1(r.text).hexdigest() != sha1:
-      response = (test_name, "FAILED", "File content doesn't match")
+      result['status'] = "FAILED"
+      result['message'] = "File content doesn't match"
   except requests.exceptions.Timeout:
-    response[1] = "FAILED"
-    response[2] = "Connection to server timed out"
+    result['status'] = "FAILED"
+    result['message'] = "Connection to server timed out"
   except requests.exceptions.ConnectionError:
-    response[1] = "FAILED"
-    response[2] = "Connection error"
+    result['status'] = "FAILED"
+    result['message'] = "Connection error"
   except requests.exceptions.HTTPError:
-    response[1] = "FAILED"
-    response[2] = "Invalid HTTP Response"
+    result['status'] = "FAILED"
+    result['message'] = "Invalid HTTP Response"
   except requests.exceptions:
-    response[1] = "FAILED"
-    response[2] = "Invalid HTTP Response"
+    result['status'] = "FAILED"
+    result['message'] = "Invalid HTTP Response"
     
-  return response
+  return result
 
-def test_xroot(test_name, uri, sha1):
-  response = (test_name, "OK", error)
+def test_xrootd(service, uri, sha1):
+  result = { 'service' : service,
+             'status' : "OK", 
+             'message' : '' } 
+  try:
+    print "run_xrdcp.sh %s /tmp/xrdcp.test" % uri
+    status = subprocess.call("./run_xrdcp.sh %s /tmp/xrdcp.test" % uri, shell=True)
+  except OSError:
+    result['status'] = "FAILED"
+    result['message'] = "xrdcp did not succeed"
+    return result
+  if status != 0 :
+    result['status'] = "FAILED"
+    result['message'] = "xrdcp did not succeed"
+    return result 
+  if hashlib.sha1(open("/tmp/xrdcp.test").read()).hexdigest() != sha1:
+    result['status'] = "FAILED"
+    result['message'] = "SHA1 hash does not match"
+  os.unlink("/tmp/xrdcp.test")
 
-  return response
+  return result
 
 
-def run_tests():
-  http_results = []
-  http_hosts = [['Stash HTTP test', 
-                 'http://stash.osgconnect.net/keys/cern.ch.pub', 
-                 '5b83bedef4c7ba38520d7e1b764f0cbc28527fb9']]
-  ssh_results = []
-  ssh_hosts = [['OSG Connect login', 'login.osgconnect.net', 'sthapa'],
-               ['ATLAS Connect login', 'login.usatlas.org', 'sthapa']]
-  
-  #xrdcp_hosts = [['FAXBOX', 'xrootd://faxbox.atlasconnect.net', 'sha1']]
-  for host in http_hosts:
-    http_results.append(test_download(*host))
-  for host in ssh_hosts:
-    ssh_results.append(test_login(*host))
+def run_tests(output_file):
+  test_sites = []
+  osg_tests = { 'anchor' : 'OSG',
+                'set_name' : 'OSG Connect',
+                'tests' : { 'http' : ['Stash',
+                                      'http://stash.osgconnect.net/keys/cern.ch.pub',
+                                      '5b83bedef4c7ba38520d7e1b764f0cbc28527fb9'],
+                            'login' : ['SSH Login', 
+                                       'login.osgconnect.net',
+                                       'sthapa']
+                            }}
+  test_sites.append(osg_tests)
+  atlas_tests = { 'anchor' : 'ATLAS',
+                  'set_name' : 'ATLAS Connect',
+                  'tests' : { 'http' : ['Faxbox',
+                                        'http://faxbox.usatlas.org/keys/cern.ch.pub',
+                                        '5b83bedef4c7ba38520d7e1b764f0cbc28527fb9'],
+                              'login' : ['SSH Login', 
+                                         'login.usatlas.org',
+                                         'sthapa'],
+                              'xrootd' : ['Xrootd',
+                                          'root://faxbox.usatlas.org//user/sthapa/filelist',
+                                          'f5127d99e4c75967e1bb992cd7d275554b111d75']}}
+  test_sites.append(atlas_tests)
+
+  for site in test_sites:
+    site['results'] = []
+    for test in site['tests']:
+      if test == 'http':
+        site['results'].append(test_download(*site['tests'][test]))
+      elif test == 'login':
+        site['results'].append(test_login(*site['tests'][test]))
+      elif test == 'xrootd':
+        site['results'].append(test_xrootd(*site['tests'][test]))
+
   env = jinja2.Environment(loader=jinja2.FileSystemLoader( searchpath="." ))
   template = env.get_template('templates/status.html')
   admin_mesg = None
   if os.path.isfile(ADMIN_MESG_LOCATION):
     admin_mesg = open(ADMIN_MESG_LOCATION).read()
-  print template.render(http_results = http_results,
-                        ssh_results = ssh_results,
-                        xrootd_results = [],
-                        admin_mesg = admin_mesg,
-                        time = time.asctime())
+  open(output_file, 'w').write(template.render(test_sets = test_sites,
+                               admin_mesg = admin_mesg,
+                               time = time.asctime()))
 if __name__ == "__main__":
-   run_tests()
+   run_tests(sys.argv[1])
    sys.exit(0)

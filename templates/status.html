@@ -13,23 +13,25 @@
 
   <h2>System Status as of {{ time }}</h2>
 
-  {% if http_results %}
-  <h2> HTTP Status </h2>
+  {% for test_set in test_sets %}
+    {% if test_set %}
+  <a id="{{ test_set.anchor }}">&nbsp;</a>
+  <h2> {{ test_set.set_name }} </h2>
   <table>
     <thead>
       <tr>
-        <td>Test Name</td>
+        <td>Service</td>
         <td>Status</td>
         <td>Messages</td>
       </tr>
     </thead>
     <tbody>
-    {% for result in http_results %}
+    {% for result in test_set.results %}
       <tr>
         <td>
-          {{ result[0] }}
+          <a > {{ result.service }} </a>
         </td>
-        {% if result[1] == 'OK' %}
+        {% if result.status == 'OK' %}
         <td style="color:green">
           OK
         </td>
@@ -38,83 +40,16 @@
           DOWN
         </td>
         {% endif %}
-        {% if result[2] %}
-        <td> {{ result[2] }} </td>
+        {% if result.message %}
+        <td> {{ result.message }} </td>
         {% else %}
         <td> &nbsp; </td>
         {% endif %} 
     {% endfor %}
     </tbody>
   </table>
-  {% endif %}
-  {% if ssh_results %}
-  <h2> SSH Status </h2>
-  <table>
-    <thead>
-      <tr>
-        <td>Test Name</td>
-        <td>Status</td>
-        <td>Messages</td>
-      </tr>
-    </thead>
-    <tbody>
-    {% for result in ssh_results %}
-      <tr>
-        <td>
-          {{ result[0] }}
-        </td>
-        {% if result[1] == 'OK' %}
-        <td style="color:green">
-          OK
-        </td>
-        {% else %}
-        <td style="color:red">
-          DOWN
-        </td>
-        {% endif %}
-        {% if result[2] %}
-        <td> {{ result[2] }} </td>
-        {% else %}
-        <td> &nbsp; </td>
-        {% endif %} 
-    {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
-  {% if xrootd_results %}
-  <h2> XRootd Status </h2>
-  <table>
-    <thead>
-      <tr>
-        <td>Test Name</td>
-        <td>Status</td>
-        <td>Messages</td>
-      </tr>
-    </thead>
-    <tbody>
-    {% for result in xrootd_results %}
-      <tr>
-        <td>
-          {{ result[0] }}
-        </td>
-        {% if result[1] == 'OK' %}
-        <td style="color:green">
-          OK
-        </td>
-        {% else %}
-        <td style="color:red">
-          DOWN
-        </td>
-        {% endif %}
-        {% if result[2] %}
-        <td> {{ result[2] }} </td>
-        {% else %}
-        <td> &nbsp; </td>
-        {% endif %} 
-    {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
+    {% endif %}
+  {% endfor %}
   {% if admin_mesg %}
   <h2> Administrative Messages</h2>
   <p>{{ admin_mesg }}</p>
