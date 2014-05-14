@@ -11,6 +11,8 @@
 
 <div id="content">
 
+  <h2>System Status as of {{ time }}</h2>
+
   {% if http_results %}
   <h2> HTTP Status </h2>
   <table>
@@ -113,7 +115,10 @@
     </tbody>
   </table>
   {% endif %}
-
+  {% if admin_mesg %}
+  <h2> Administrative Messages</h2>
+  <p>{{ admin_mesg }}</p>
+  {% endif %}
 </div>
 
 </body>
