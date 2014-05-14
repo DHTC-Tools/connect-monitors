@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 import hashlib
+import sys
 
 import jinja2
 import requests
 import paramiko
 
 def test_login(test_name, host, user ):
-  reponse = [test_name, "OK", ""]
+  response = [test_name, "OK", ""]
   client = paramiko.client.SSHClient()
   try:
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -21,14 +22,14 @@ def test_login(test_name, host, user ):
   return response
 
 def test_download(test_name, url, sha1):
-  response = [test_name, "OK", error]
+  response = [test_name, "OK", '']
   try:
     r = requests.get(url, timeout=60)
     if r.status_code != requests.codes.ok:
       response[1] = "FAILED"
       response[2] = "HTTP Status code: %s" % r.status_code
       return response
-    if hashlib.sha1(r.text) != sha1:
+    if hashlib.sha1(r.text).hexdigest() != sha1:
       response = (test_name, "FAILED", "File content doesn't match")
   except requests.exceptions.Timeout:
     response[1] = "FAILED"
@@ -55,7 +56,7 @@ def run_tests():
   http_results = []
   http_hosts = [['Stash HTTP test', 
                  'http://stash.osgconnect.net/keys/cern.ch.pub',
-                 'sha1']]
+                 '5b83bedef4c7ba38520d7e1b764f0cbc28527fb9']]
   ssh_results = []
   ssh_hosts = [['OSG Connect login', 'login.osgconnect.net', 'sthapa']]
   #xrdcp_hosts = [['FAXBOX', 'xrootd://faxbox.atlasconnect.net', 'sha1']]
@@ -64,10 +65,10 @@ def run_tests():
   for host in ssh_hosts:
     ssh_results.append(test_login(*host))
   env = jinja2.Environment(loader=jinja2.FileSystemLoader( searchpath="." ))
-  template = env.get_template('templates/check_page.html')
+  template = env.get_template('templates/status.html')
   print template.render(http_results = http_results,
                         ssh_results = ssh_results,
                         xrootd_results = [])
-if __name__ = "main":
+if __name__ == "__main__":
    run_tests()
    sys.exit(0)
