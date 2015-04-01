@@ -1,0 +1,10 @@
+{
+      "stash.osgconnect.net":{
+         "status":"red",
+         "notes":"broken"
+      },
+      "faxbox.usatlas.org":{
+         "status":"green",
+         "notes":"admin override"
+      }
+}

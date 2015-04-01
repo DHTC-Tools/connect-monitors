@@ -1,5 +1,5 @@
 {
-  "groups": [
+"groups": [
         {
             "services": [
                 "stash.ci-connect.net",

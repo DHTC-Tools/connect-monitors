@@ -6,12 +6,12 @@
   },
   "stash.osgconnect.net" : {
     "type" : "http",
-    "host" : "http://stash.osgconnect.net/keys/cern.ch.pub",
+    "url" : "http://stash.osgconnect.net/keys/cern.ch.pub",
     "sha1sum" : "5b83bedef4c7ba38520d7e1b764f0cbc28527fb9"
   },
   "faxbox.usatlas.org" : {
     "type" : "http",
-    "host" : "http://faxbox.usatlas.org/keys/cern.ch.pub",
+    "url" : "http://faxbox.usatlas.org/keys/cern.ch.pub",
     "sha1sum" : "5b83bedef4c7ba38520d7e1b764f0cbc28527fb9"
   },
   "login.usatlas.org" : {
@@ -21,7 +21,7 @@
   },
   "xrootd.usatlas.org" : {
     "type" : "xrootd",
-    "host" : "root://faxbox.usatlas.org//user/sthapa/filelist",
+    "uri" : "root://faxbox.usatlas.org//user/sthapa/filelist",
     "sha1sum" : "f5127d99e4c75967e1bb992cd7d275554b111d75"
   }
 }

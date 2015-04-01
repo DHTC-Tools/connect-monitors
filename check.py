@@ -68,7 +68,6 @@ def test_xrootd(service, uri, sha1):
               'status': "green",
               'notes': ''}
     try:
-        print "run_xrdcp.sh %s /tmp/xrdcp.test" % uri
         status = subprocess.call("./run_xrdcp.sh %s /tmp/xrdcp.test" % uri, shell=True)
     except OSError:
         result['status'] = "red"
@@ -99,15 +98,15 @@ def run_tests(config={}, site_messages={}):
     test_results = []
     if not config:
         return []
-    for service, config in config:
+    for service, config in config.iteritems():
         result = {'service': service}
         if service in site_messages:
             # if service is in site messages use this instead of
             # test results
-            if 'status' in site_messages['service']:
-                result['status'] = site_messages['service']['status']
-            if 'note' in site_messages['service']:
-                result['note'] = site_messages['service']['notes']
+            if 'status' in site_messages[service]:
+                result['status'] = site_messages[service]['status']
+            if 'notes' in site_messages[service]:
+                result['notes'] = site_messages[service]['notes']
             test_results.append(result)
             continue
         if config['type'] == 'ssh':
@@ -119,9 +118,9 @@ def run_tests(config={}, site_messages={}):
                                         config['url'],
                                         config['sha1sum']))
         elif config['type'] == 'xrootd':
-            result.update(test_download(service,
-                                        config['uri'],
-                                        config['sha1sum']))
+            result.update(test_xrootd(service,
+                                      config['uri'],
+                                      config['sha1sum']))
         test_results.append(result)
     return test_results
 
@@ -153,7 +152,7 @@ def parse_group_info(group_file=None):
         return info
     buf = open(group_file).read()
     info = json.loads(buf)
-    return info
+    return info['groups']
 
 
 def parse_config(config_file=None):
@@ -184,12 +183,13 @@ def write_output(output_file=None, results=[], group_info=""):
     combined_output = "{\n"
     combined_output += '"services": {' + "\n"
     for result in results:
-        result_str = "\"{0}\": {\n".format(result['service'])
-        result_str += "\"status\": \"{1}\",\n".format(result['status'])
-        result_str += "\"notes\": \"{2}\"\n},\n".format(result['notes'])
+        result_str = "\"{0}\": ".format(result['service']) + "{\n"
+        result_str += "\"status\": \"{0}\",\n".format(result['status'])
+        result_str += "\"notes\": \"{0}\"".format(result['notes']) + "\n},\n"
         combined_output += result_str
     combined_output = combined_output[:-2] + "\n"
     combined_output += "},\n"
+    combined_output += "\"groups\" : \n" 
     combined_output += json.dumps(group_info)
     combined_output += "}"
     if output_file is None:
