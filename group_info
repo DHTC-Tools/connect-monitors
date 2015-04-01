@@ -1,0 +1,64 @@
+{
+  "groups": [
+        {
+            "services": [
+                "stash.ci-connect.net",
+                "portal.ci-connect.net"
+            ],
+            "id": "common",
+            "name": "Common Services"
+        },
+        {
+            "services": [
+                "login.usatlas.org",
+                "faxbox.usatlas.org"
+            ],
+            "id": "atlas",
+            "name": "ATLAS Connect"
+        },
+        {
+            "services": [
+                "login.cms.ci-connect.net"
+            ],
+            "id": "cms",
+            "name": "CMS Connect"
+        },
+        {
+            "services": [
+                "login.duke.ci-connect.net"
+            ],
+            "id": "duke",
+            "name": "Duke University"
+        },
+        {
+            "services": [
+                "login.osgconnect.net",
+                "stash.osgconnect.net"
+            ],
+            "id": "osg",
+            "name": "OSG Connect"
+        },
+        {
+            "services": [
+                "login.syracuse.ci-connect.net"
+            ],
+            "id": "syracuse",
+            "name": "Syracuse University"
+        },
+        {
+            "services": [
+                "login.uchicago.ci-connect.net",
+                "globus.rcc.uchicago.edu"
+            ],
+            "id": "uchicago",
+            "name": "University of Chicago"
+        },
+        {
+            "services": [
+                "login.umich.ci-connect.net"
+            ],
+            "id": "umich",
+            "name": "University of Michican"
+        }
+    ]
+}
